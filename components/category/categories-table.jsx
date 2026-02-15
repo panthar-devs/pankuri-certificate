@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Eye, EyeOff, Lock, MoreHorizontal, Pencil, Trash2, Unlock } from "lucide-react"
+import { Check, Copy, Eye, EyeOff, Lock, MoreHorizontal, Pencil, Trash2, Unlock } from "lucide-react"
 // import { deleteCategory, updateCategoryStatus } from "@/lib/category-actions"
 import { deleteCategory, updateCategoryStatus } from "@/lib/backend_actions/category"
 import Image from "next/image"
@@ -27,6 +27,7 @@ export function CategoriesTable({ categories, parentCategories, pagination }) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
     const [editingCategory, setEditingCategory] = useState(null)
+    const [copiedId, setCopiedId] = useState(null)
 
     const handleToggleStatus = async (categoryId, currentStatus) => {
         const newStatus = currentStatus === "active" ? "inactive" : "active"
@@ -49,6 +50,20 @@ export function CategoriesTable({ categories, parentCategories, pagination }) {
         )
     }
 
+    const handleCopy = async (id) => {
+        try {
+            await navigator.clipboard.writeText(id)
+            setCopiedId(id)
+            toast.success("Category ID copied to clipboard")
+
+            setTimeout(() => {
+                setCopiedId(null)
+            }, 2000)
+        } catch (err) {
+            toast.error("Failed to copy category ID")
+        }
+    }
+
     return (
         <>
             <div className="border rounded-lg">
@@ -57,6 +72,7 @@ export function CategoriesTable({ categories, parentCategories, pagination }) {
                         <TableRow>
                             <TableHead className="w-[50px]">Icon</TableHead>
                             <TableHead>Name</TableHead>
+                            <TableHead>Id</TableHead>
                             <TableHead>Slug</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Status</TableHead>
@@ -85,6 +101,23 @@ export function CategoriesTable({ categories, parentCategories, pagination }) {
                                     )}
                                 </TableCell>
                                 <TableCell className="font-medium">{category.name}</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-muted-foreground text-xs truncate max-w-[120px]">{category.id}</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7"
+                                            onClick={() => handleCopy(category.id)}
+                                        >
+                                            {copiedId === category.id ? (
+                                                <Check className="h-3.5 w-3.5 text-green-500" />
+                                            ) : (
+                                                <Copy className="h-3.5 w-3.5" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-muted-foreground">{category.slug}</TableCell>
                                 <TableCell className="max-w-[300px] truncate">{category.description || "—"}</TableCell>
                                 <TableCell>

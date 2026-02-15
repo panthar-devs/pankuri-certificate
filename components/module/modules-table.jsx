@@ -33,6 +33,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import DeleteModuleDialog from "./delete-module-dialog"
 import EditModuleDialog from "./edit-module-dialog"
+import { HandleCopyBtn } from "@/lib/client.utils"
 
 const STATUS_BADGES = {
     draft: { variant: "secondary", label: "Draft" },
@@ -106,6 +107,7 @@ export default function ModulesTable({ modules, courses, selectedCourseId }) {
                             <TableRow>
                                 <TableHead className="w-[70px]">Seq</TableHead>
                                 <TableHead>Title</TableHead>
+                                <TableHead>Module Id</TableHead>
                                 <TableHead>Course</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-center">Lessons</TableHead>
@@ -146,6 +148,9 @@ export default function ModulesTable({ modules, courses, selectedCourseId }) {
                                                     </p>
                                                 )}
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <HandleCopyBtn id={module.id} />
                                         </TableCell>
                                         <TableCell onClick={() => { router.push(`/module/${module.id}`) }} >
                                             <span className="text-sm">{getCourseName(module.courseId)}</span>

@@ -12,14 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toggleCoursePublishStatus } from "@/lib/backend_actions/course"
-import { Eye, EyeOff, Lock, MoreHorizontal, Pencil, Trash2, Unlock } from "lucide-react"
+import { Check, Copy, Eye, EyeOff, Lock, MoreHorizontal, Pencil, Trash2, Unlock } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { DeleteCourseDialog } from "./delete-course-dialog"
 import { EditCourseDialog } from "./edit-course-dialog"
 import PaginationNumberless from "../customized/pagination/pagination-12"
+import { HandleCopyBtn } from "@/lib/client.utils"
 
 const LEVEL_BADGES = {
     beginner: "default",
@@ -30,6 +31,7 @@ const LEVEL_BADGES = {
 
 export function CoursesTable({ courses, categories, pagination }) {
     const router = useRouter()
+
     const [isPending, startTransition] = useTransition()
 
     const handleToggleStatus = async (courseId, currentStatus) => {
@@ -66,6 +68,7 @@ export function CoursesTable({ courses, categories, pagination }) {
                         <TableRow>
                             <TableHead className="w-[50px]">Thumbnail</TableHead>
                             <TableHead>Title</TableHead>
+                            <TableHead>Course ID</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Level</TableHead>
                             <TableHead>Duration</TableHead>
@@ -103,6 +106,9 @@ export function CoursesTable({ courses, categories, pagination }) {
                                             <p className="text-xs text-muted-foreground truncate">{course.description}</p>
                                         )}
                                     </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                    <HandleCopyBtn id={course.id} />
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">{getCategoryName(course.categoryId)}</TableCell>
                                 <TableCell onClick={() => { router.push(`/course/${course.id}`) }}>

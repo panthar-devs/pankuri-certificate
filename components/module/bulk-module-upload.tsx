@@ -1,64 +1,49 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import * as XLSX from "xlsx"
-import { createBulkVideos } from "@/lib/backend_actions/videos"
+import { bulkCreateModules } from "@/lib/backend_actions/module"
+import { useRouter } from "next/navigation"
 
-interface ParsedVideo {
+interface ParsedModule {
+    courseId: string
     title: string
-    externalUrl: string
-    thumbnailUrl: string
-    duration: string
-    videoQuality: string
-    isShort: boolean
-    disclaimer: string
-    products: string  // JSON string for display
-    timeStamps: string  // JSON string for display
+    slug: string
     description: string
+    sequence: string
+    duration: string
 
     status?: "pending" | "valid" | "invalid"
     error?: string
 
-    // Backend-ready payload (not shown in UI)
+    // Backend-ready payload
     backendPayload?: {
+        courseId: string
         title: string
-        externalUrl: string | null
-        thumbnailUrl: string | null
-        duration: number | null
-        // quality: number
-        metadata: {
-            quality: number
-            isShort: boolean
-        }
-        videoDescription: {
-            disclaimer?: string
-            products?: Array<{
-                name: string
-                url: string
-                image: string
-            }>
-            timestamps?: Array<{
-                time_interval: string
-                time_content: string
-            }>
-            description?: string
-        } | null
+        slug: string
+        description?: string
+        sequence: number
+        duration?: number
     }
 }
 
-const BulkVideoUpload = () => {
+interface BulkModuleUploadProps {
+    courses: Array<{ id: string; title: string }>
+}
+
+const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
+    const router = useRouter()
     const [file, setFile] = useState<File | null>(null)
     const [valid, setValid] = useState<number | null>(null)
-    const [parsedData, setParsedData] = useState<ParsedVideo[]>([])
+    const [parsedData, setParsedData] = useState<ParsedModule[]>([])
     const [isParsing, setIsParsing] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
     const [dragActive, setDragActive] = useState(false)
-    const [isPending, startTransition] = useTransition()
-
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault()
@@ -94,6 +79,7 @@ const BulkVideoUpload = () => {
 
         setFile(selectedFile)
         setParsedData([])
+        setValid(null)
         toast.success(`File "${selectedFile.name}" selected`)
     }
 
@@ -103,17 +89,22 @@ const BulkVideoUpload = () => {
         }
     }
 
-    const validateRow = (row: ParsedVideo): ParsedVideo => {
+    const validateRow = (row: ParsedModule): ParsedModule => {
         const errors: string[] = []
 
         if (!row.title || row.title.length < 3) {
             errors.push("Title must be at least 3 characters")
         }
-        if (!row.externalUrl || !row.externalUrl.startsWith("http")) {
-            errors.push("Invalid URL")
+        if (!row.slug || row.slug.length < 1) {
+            errors.push("Slug is required")
         }
-        if (!row.duration) {
-            errors.push("Duration is required")
+        if (!row.courseId) {
+            errors.push("Course is required")
+        } else if (!courses.find(c => c.id === row.courseId)) {
+            errors.push("Invalid course ID")
+        }
+        if (!row.sequence || parseInt(row.sequence) < 1) {
+            errors.push("Sequence must be at least 1")
         }
 
         return {
@@ -138,74 +129,45 @@ const BulkVideoUpload = () => {
             const worksheet = workbook.Sheets[sheetName]
             const jsonData = XLSX.utils.sheet_to_json<any>(worksheet)
 
-            console.log("Json data for excel sheet ==> ", jsonData)
+            const getValue = (row: any, ...keys: string[]) => {
+                for (const key of keys) {
+                    const trimmedKey = key.trim()
+                    if (row[trimmedKey]) return String(row[trimmedKey]).trim()
+                    if (row[trimmedKey.toLowerCase()]) return String(row[trimmedKey.toLowerCase()]).trim()
+                    if (row[trimmedKey.toUpperCase()]) return String(row[trimmedKey.toUpperCase()]).trim()
 
-            const parsed: ParsedVideo[] = jsonData.map((row) => {
-                // Helper to safely parse JSON strings
-                const safeJsonParse = (str: string, fallback: any = null) => {
-                    try {
-                        return str ? JSON.parse(str) : fallback
-                    } catch {
-                        return fallback
-                    }
+                    const foundKey = Object.keys(row).find(k =>
+                        k.trim().toLowerCase() === trimmedKey.toLowerCase()
+                    )
+                    if (foundKey) return String(row[foundKey]).trim()
                 }
+                return ""
+            }
 
-                // Parse raw fields
-                const title = row.title || row.Title || ""
-                const externalUrl = row.externalUrl || row.ExternalUrl || row.url || row.URL || ""
-                const thumbnailUrl = row.thumbnailUrl || row.ThumbnailUrl || row.thumbnail || row.Thumbnail || ""
-                const duration = parseFloat(row.duration || row.Duration || "0")
-                const videoQuality = parseInt(row.videoQuality || row.VideoQuality || "720", 10)
-                const isShort = row.isShort === true || row.IsShort === true || row.isShort === "true" || false
-                const disclaimer = row.disclaimer || row.Disclaimer || ""
-                const description = row.description || row.Description || ""
+            const parsed: ParsedModule[] = jsonData.map((row) => {
+                const courseId = getValue(row, "courseId", "CourseId", "course")
+                const title = getValue(row, "title", "Title")
+                const slug = getValue(row, "slug", "Slug")
+                const description = getValue(row, "description", "Description")
+                const sequence = getValue(row, "sequence", "Sequence")
+                const duration = getValue(row, "duration", "Duration")
 
-                // Parse JSON arrays from Excel cells
-                const productsRaw = row.products || row.Products || "[]"
-                const timeStampsRaw = row.timeStamps || row.TimeStamps || "[]"
-                const productsArray = safeJsonParse(productsRaw, [])
-                const timeStampsArray = safeJsonParse(timeStampsRaw, [])
-
-                // Build videoDescription object (null if all fields empty)
-                const videoDescription = (disclaimer || productsArray.length > 0 || timeStampsArray.length > 0 || description)
-                    ? {
-                        disclaimer: disclaimer || undefined,
-                        products: productsArray.length > 0 ? productsArray : undefined,
-                        timestamps: timeStampsArray.length > 0 ? timeStampsArray : undefined,
-                        description: description || undefined,
-                    }
-                    : null
-
-                // Build backend-ready payload
                 const backendPayload = {
+                    courseId,
                     title,
-                    externalUrl: externalUrl || null,
-                    thumbnailUrl: thumbnailUrl || null,
-                    duration: duration || null,
-                    // quality: videoQuality,
-                    status: externalUrl ? "ready" : "processing",
-                    metadata: {
-                        quality: videoQuality,
-                        isShort,
-                    },
-                    videoDescription,
-                    storageKey: null, // No file upload in bulk
+                    slug,
+                    description: description || undefined,
+                    sequence: sequence ? parseInt(sequence, 10) : 1,
+                    duration: duration ? parseInt(duration, 10) : undefined,
                 }
 
                 return {
-                    // UI Display Fields
+                    courseId,
                     title,
-                    externalUrl,
-                    thumbnailUrl,
-                    duration: duration.toString(),
-                    videoQuality: videoQuality.toString(),
-                    isShort,
-                    disclaimer,
-                    products: productsRaw,
-                    timeStamps: timeStampsRaw,
+                    slug,
                     description,
-
-                    // Backend Payload
+                    sequence,
+                    duration,
                     backendPayload,
                 }
             })
@@ -215,7 +177,7 @@ const BulkVideoUpload = () => {
 
             const validCount = validatedData.filter(v => v.status === "valid").length
             setValid(validCount)
-            toast.success(`Parsed ${validatedData.length} videos (${validCount} valid)`)
+            toast.success(`Parsed ${validatedData.length} modules (${validCount} valid)`)
         } catch (error) {
             console.error("Parse error:", error)
             toast.error("Failed to parse Excel file")
@@ -225,20 +187,36 @@ const BulkVideoUpload = () => {
     }
 
     const handleBulkUpload = async () => {
+        const validModules = parsedData.filter(v => v.status === "valid")
+
+        if (validModules.length === 0) {
+            toast.error("No valid modules to upload")
+            return
+        }
+
+        setIsUploading(true)
+        toast.info(`Uploading ${validModules.length} modules...`)
+
         try {
-            startTransition(async () => {
-                const res = await createBulkVideos(parsedData.filter(v => v.status === "valid").map(v => v.backendPayload!))
-                if (res.success) {
-                    toast.success(`Successfully uploaded ${parsedData.filter(v => v.status === "valid").length} videos`)
-                } else {
-                    toast.warning(`Failed to upload videos: ${res.error}`)
-                }
-            })
+            const payloads = validModules.map(v => v.backendPayload!)
+
+            const result = await bulkCreateModules(payloads)
+
+            if (result.success) {
+                toast.success(`Successfully uploaded ${validModules.length} modules!`)
+                setParsedData([])
+                setFile(null)
+                setValid(null)
+                router.refresh()
+            } else {
+                toast.error(result.error || "Bulk upload failed")
+            }
         } catch (error) {
             console.error("Bulk upload error:", error)
             toast.error("An error occurred during bulk upload")
+        } finally {
+            setIsUploading(false)
         }
-
     }
 
     return (
@@ -247,14 +225,14 @@ const BulkVideoUpload = () => {
                 <CardHeader>
                     <CardTitle>Upload Excel File</CardTitle>
                     <CardDescription>
-                        Upload an Excel file with columns: title, description, externalUrl, duration, videoQuality, isShort
+                        Upload an Excel file with columns: courseId, title, slug, description, sequence, duration
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div
                         className={`relative border-2 border-dashed rounded-lg p-12 transition-colors ${dragActive
-                            ? "border-primary bg-primary/5"
-                            : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                                ? "border-primary bg-primary/5"
+                                : "border-muted-foreground/25 hover:border-muted-foreground/50"
                             }`}
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -306,16 +284,16 @@ const BulkVideoUpload = () => {
                         {parsedData.length > 0 && (
                             <Button
                                 onClick={handleBulkUpload}
-                                disabled={parsedData.filter(v => v.status === "valid").length === 0 || isPending}
-                                className="flex-1 py-6 "
+                                disabled={valid === 0 || isUploading}
+                                className="flex-1 py-6"
                             >
-                                {isPending ? (
+                                {isUploading ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                         Uploading...
                                     </>
                                 ) : (
-                                    `Upload ${parsedData.filter(v => v.status === "valid").length} Videos`
+                                    `Upload ${valid} Modules`
                                 )}
                             </Button>
                         )}
@@ -326,9 +304,14 @@ const BulkVideoUpload = () => {
             {parsedData.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Parsed Videos ({parsedData.length})
-                            <span className="text-green-300" >  {valid !== null && `${valid} valid`} </span>
-                            <span className="text-red-300" >  {valid !== null && `${parsedData.length - valid} Invalid`} </span>
+                        <CardTitle>
+                            Parsed Modules ({parsedData.length})
+                            {valid !== null && (
+                                <>
+                                    <span className="text-green-500 ml-2">{valid} valid</span>
+                                    <span className="text-red-500 ml-2">{parsedData.length - valid} invalid</span>
+                                </>
+                            )}
                         </CardTitle>
                         <CardDescription>
                             Review the parsed data before uploading
@@ -341,54 +324,38 @@ const BulkVideoUpload = () => {
                                     <TableRow>
                                         <TableHead className="w-12">Status</TableHead>
                                         <TableHead>Title</TableHead>
-                                        <TableHead>Video URL</TableHead>
-                                        <TableHead>Thumbnail URL</TableHead>
+                                        <TableHead>Slug</TableHead>
+                                        <TableHead>Course ID</TableHead>
+                                        <TableHead>Sequence</TableHead>
                                         <TableHead>Duration</TableHead>
-                                        <TableHead>Quality</TableHead>
-                                        <TableHead>Short</TableHead>
-                                        <TableHead>Disclaimer</TableHead>
-                                        <TableHead>Products</TableHead>
-                                        <TableHead>TimeStamps</TableHead>
                                         <TableHead>Description</TableHead>
-                                        <TableHead>Error Message</TableHead>
+                                        <TableHead>Error</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {parsedData.map((video, index) => (
+                                    {parsedData.map((module, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                {video.status === "valid" ? (
+                                                {module.status === "valid" ? (
                                                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                                                 ) : (
                                                     <AlertCircle className="w-5 h-5 text-destructive" />
                                                 )}
                                             </TableCell>
                                             <TableCell className="font-medium max-w-[200px] truncate">
-                                                {video.title}
+                                                {module.title}
                                             </TableCell>
-                                            <TableCell className="max-w-[150px] truncate text-xs">
-                                                {video.externalUrl}
+                                            <TableCell className="text-xs max-w-[150px] truncate">
+                                                {module.slug}
                                             </TableCell>
-                                            <TableCell className="max-w-[150px] truncate text-xs">
-                                                {video.thumbnailUrl}
+                                            <TableCell className="text-xs">{module.courseId}</TableCell>
+                                            <TableCell>{module.sequence}</TableCell>
+                                            <TableCell>{module.duration}</TableCell>
+                                            <TableCell className="text-xs max-w-[200px] truncate">
+                                                {module.description}
                                             </TableCell>
-                                            <TableCell>{video.duration}</TableCell>
-                                            <TableCell>{video.videoQuality}</TableCell>
-                                            <TableCell>{video.isShort ? "Yes" : "No"}</TableCell>
-                                            <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                                                {video.disclaimer}
-                                            </TableCell>
-                                            <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                                                {video.products}
-                                            </TableCell>
-                                            <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                                                {video.timeStamps}
-                                            </TableCell>
-                                            <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                                                {video.description}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-destructive max-w-[150px] truncate">
-                                                {video.error}
+                                            <TableCell className="text-xs text-destructive max-w-[200px] truncate">
+                                                {module.error}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -402,4 +369,4 @@ const BulkVideoUpload = () => {
     )
 }
 
-export default BulkVideoUpload
+export default BulkModuleUpload

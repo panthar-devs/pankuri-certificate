@@ -8,7 +8,6 @@ import { getVideoPlaybackUrl } from '@/lib/action';
 
 
 export function VideoPlayer({ isOpen, onClose, video, children }) {
-    console.log("VideoPlayer video:", video);
     const [open, setOpen] = useState(false);
     const [signedUrl, setSignedUrl] = useState(null);
     const [loading, setLoading] = useState(true);

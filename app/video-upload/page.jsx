@@ -5,13 +5,30 @@ import UploadVideoDialog from '@/components/upload-video-dialog'
 import BulkVideoUpload from '@/components/video-upload/bulk-video-upload'
 import { videoColumns } from '@/components/video-upload/column'
 import { DataTable } from '@/components/video-upload/data-table'
+import { VideoFilter } from '@/components/video-upload/video-filter'
 import { getAllVideos } from '@/lib/backend_actions/videos'
 import { Plus, Upload } from 'lucide-react'
 
-const page = async () => {
+const page = async ({ searchParams }) => {
+    // 1. Await searchParams (Next.js 15 requirement, good practice generally)
+    const params = await searchParams
 
-    const res = await getAllVideos()
+    // 2. Parse params securely
+    const page = Number(params?.page) || 1
+    const limit = Number(params?.limit) || 100
+    const search = params?.search || undefined
+    const status = (params?.status && params?.status !== 'all') ? params.status : undefined
+
+    // 3. Fetch Data
+    const res = await getAllVideos({
+        status,
+        search,
+        offset: (page - 1) * limit,
+        limit,
+    })
+
     const videos = res.success ? res.data : []
+    const totalCount = res.meta?.total || videos.length // Assuming backend returns meta
 
     return (
         <main className="min-h-screen">
@@ -24,72 +41,53 @@ const page = async () => {
                     <p className="text-muted-foreground">Manage and organize your video content</p>
                 </div>
 
-
-
-                <div className="flex justify-end mb-4">
-                    <UploadVideoDialog>
-                        <Button variant="gradient">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Upload Video
-                        </Button>
-                    </UploadVideoDialog>
-                </div>
-
-                <Card className="shadow-lg">
-                    <CardHeader>
-                        <CardTitle>Videos</CardTitle>
-                        <CardDescription>Manage your video library</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <DataTable
-                            columns={videoColumns}
-                            data={videos}
-                            pagination={{ currentPage: 1, totalPages: 1 }}
-                        />
-                    </CardContent>
-                </Card>
-
-                {/* <Tabs defaultValue="single" className="w-full">
-                    <TabsList className="grid w-full max-w-md grid-cols-2">
-                        <TabsTrigger value="single" className="gap-2">
+                <Tabs defaultValue="single" className="w-full">
+                    <TabsList variant="line" className="w-full justify-start border-b rounded-none bg-transparent px-0 gap-4">
+                        <TabsTrigger
+                            value="single"
+                            className="text-base px-1 pb-3 gap-2 data-[state=active]:font-semibold"
+                        >
                             <Plus className="w-4 h-4" />
                             Upload Video
                         </TabsTrigger>
-                        <TabsTrigger value="bulk" className="gap-2">
+                        <TabsTrigger
+                            value="bulk"
+                            className="text-base px-1 pb-3 gap-2 data-[state=active]:font-semibold"
+                        >
                             <Upload className="w-4 h-4" />
                             Bulk Upload
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="single" className="mt-6">
-                        <div className="flex justify-end mb-4">
-                            <UploadVideoDialog>
-                                <Button variant="gradient">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Upload Video
-                                </Button>
-                            </UploadVideoDialog>
-                        </div>
+                        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+                            {/* No props needed now, Filter is self-contained */}
+                            <VideoFilter />
 
-                        <Card className="shadow-lg">
-                            <CardHeader>
-                                <CardTitle>Videos</CardTitle>
-                                <CardDescription>Manage your video library</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <DataTable
-                                    columns={videoColumns}
-                                    data={videos}
-                                    pagination={{ currentPage: 1, totalPages: 1 }}
-                                />
-                            </CardContent>
-                        </Card>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <UploadVideoDialog>
+                                    <Button variant="gradient">
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Upload Video
+                                    </Button>
+                                </UploadVideoDialog>
+                            </div>
+                        </div>
+                        <DataTable
+                            columns={videoColumns}
+                            data={videos}
+                            // Ensure pagination logic is robust
+                            pagination={{
+                                currentPage: page,
+                                totalPages: Math.ceil(totalCount / limit) || 1
+                            }}
+                        />
                     </TabsContent>
 
                     <TabsContent value="bulk" className="mt-6">
                         <BulkVideoUpload />
                     </TabsContent>
-                </Tabs> */}
+                </Tabs>
             </div>
         </main>
     )

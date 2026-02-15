@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import { useState } from "react"
 import { VideoPlayer } from "./VideoPlayer"
 import { formatDuration } from "@/lib/utils"
+import { HandleCopyBtn } from "@/lib/client.utils"
 
 export const videoColumns = [
     {
@@ -36,6 +37,11 @@ export const videoColumns = [
         accessorKey: "title",
         header: "Title",
         cell: ({ row }) => <div className="max-w-xs truncate font-medium">{row.original.title || "Untitled"}</div>,
+    },
+    {
+        accessorKey: "id",
+        header: "Video ID",
+        cell: ({ row }) => <div className="text-muted-foreground text-xs truncate max-w-[170px]">{<HandleCopyBtn id={row.original.id} />}</div>,
     },
     {
         accessorKey: "duration",

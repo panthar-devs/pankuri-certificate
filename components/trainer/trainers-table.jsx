@@ -19,6 +19,7 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 import { DeleteTrainerDialog } from "./delete-trainer-dialog"
 import { EditTrainerDialog } from "./edit-trainer-dialog"
+import { HandleCopyBtn } from "@/lib/client.utils"
 
 export function TrainersTable({ trainers }) {
     const router = useRouter()
@@ -52,6 +53,7 @@ export function TrainersTable({ trainers }) {
                     <TableRow>
                         <TableHead className="w-[50px]">Photo</TableHead>
                         <TableHead>Name</TableHead>
+                        <TableHead>Trainer Id</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Specialization</TableHead>
                         <TableHead>Experience</TableHead>
@@ -88,6 +90,7 @@ export function TrainersTable({ trainers }) {
                                     )}
                                 </div>
                             </TableCell>
+                            <TableCell> <HandleCopyBtn id={trainer.id} /></TableCell>
                             <TableCell onClick={() => router.push(`/trainer/${trainer.id}`)} className="text-muted-foreground">
                                 {trainer.user?.email || "—"}
                             </TableCell>
