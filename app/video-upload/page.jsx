@@ -1,3 +1,4 @@
+import PaginationNumberless from '@/components/customized/pagination/pagination-12'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -26,8 +27,9 @@ const page = async ({ searchParams }) => {
         offset: (page - 1) * limit,
         limit,
     })
-
-    const videos = res.success ? res.data : []
+    console.log("\nGet all video response", res.data)
+    const videos = res.success ? res.data.data : []
+    const pagination = res.success ? res.data.pagination : []
     const totalCount = res.meta?.total || videos.length // Assuming backend returns meta
 
     return (
@@ -78,10 +80,16 @@ const page = async ({ searchParams }) => {
                             data={videos}
                             // Ensure pagination logic is robust
                             pagination={{
-                                currentPage: page,
-                                totalPages: Math.ceil(totalCount / limit) || 1
+                                currentPage: (pagination.offset / pagination.limit) + 1,
+                                totalPages: Math.ceil(pagination.total / pagination.limit) || 1
                             }}
                         />
+                        <PaginationNumberless pagination={{
+                            page: (pagination.offset / pagination.limit) + 1,
+                            limit: pagination.limit,
+                            total: pagination.total,
+                            totalPages: Math.ceil(pagination.total / pagination.limit) || 1
+                        }} redirectTo="video-upload" />
                     </TabsContent>
 
                     <TabsContent value="bulk" className="mt-6">

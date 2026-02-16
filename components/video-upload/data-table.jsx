@@ -49,55 +49,6 @@ export function DataTable({ columns, data, pagination, onPageChange }) {
                     </TableBody>
                 </Table>
             </div>
-
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between px-2">
-                <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                </div>
-
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => onPageChange(1)}
-                        disabled={currentPage === 1}
-                        title="First page"
-                    >
-                        <ChevronsLeft className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => onPageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        title="Previous page"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => onPageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        title="Next page"
-                    >
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        // onClick={() => onPageChange(totalPages)}
-                        disabled={currentPage === totalPages}
-                        title="Last page"
-                    >
-                        <ChevronsRight className="w-4 h-4" />
-                    </Button>
-                </div>
-            </div>
         </div>
     )
 }
