@@ -1,47 +1,23 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "sonner"
-import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
-import * as XLSX from "xlsx"
 import { bulkCreateModules } from "@/lib/backend_actions/module"
+import { ParsedModule, parseModuleExcel } from "@/lib/helper_bulk/module.helper"
+import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { toast } from "sonner"
+import { Badge } from "../ui/badge"
 
-interface ParsedModule {
-    courseId: string
-    title: string
-    slug: string
-    description: string
-    sequence: string
-    duration: string
 
-    status?: "pending" | "valid" | "invalid"
-    error?: string
 
-    // Backend-ready payload
-    backendPayload?: {
-        courseId: string
-        title: string
-        slug: string
-        description?: string
-        sequence: number
-        duration?: number
-    }
-}
-
-interface BulkModuleUploadProps {
-    courses: Array<{ id: string; title: string }>
-}
-
-const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
+const BulkModuleUpload = () => {
     const router = useRouter()
     const [file, setFile] = useState<File | null>(null)
     const [valid, setValid] = useState<number | null>(null)
     const [parsedData, setParsedData] = useState<ParsedModule[]>([])
-    const [isParsing, setIsParsing] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [dragActive, setDragActive] = useState(false)
 
@@ -89,121 +65,18 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
         }
     }
 
-    const validateRow = (row: ParsedModule): ParsedModule => {
-        const errors: string[] = []
 
-        if (!row.title || row.title.length < 3) {
-            errors.push("Title must be at least 3 characters")
-        }
-        if (!row.slug || row.slug.length < 1) {
-            errors.push("Slug is required")
-        }
-        if (!row.courseId) {
-            errors.push("Course is required")
-        } else if (!courses.find(c => c.id === row.courseId)) {
-            errors.push("Invalid course ID")
-        }
-        if (!row.sequence || parseInt(row.sequence) < 1) {
-            errors.push("Sequence must be at least 1")
-        }
-
-        return {
-            ...row,
-            status: errors.length > 0 ? "invalid" : "valid",
-            error: errors.join(", ")
-        }
-    }
-
-    const parseExcel = async () => {
-        if (!file) {
-            toast.error("Please select a file first")
-            return
-        }
-
-        setIsParsing(true)
-
-        try {
-            const data = await file.arrayBuffer()
-            const workbook = XLSX.read(data, { type: "array" })
-            const sheetName = workbook.SheetNames[0]
-            const worksheet = workbook.Sheets[sheetName]
-            const jsonData = XLSX.utils.sheet_to_json<any>(worksheet)
-
-            const getValue = (row: any, ...keys: string[]) => {
-                for (const key of keys) {
-                    const trimmedKey = key.trim()
-                    if (row[trimmedKey]) return String(row[trimmedKey]).trim()
-                    if (row[trimmedKey.toLowerCase()]) return String(row[trimmedKey.toLowerCase()]).trim()
-                    if (row[trimmedKey.toUpperCase()]) return String(row[trimmedKey.toUpperCase()]).trim()
-
-                    const foundKey = Object.keys(row).find(k =>
-                        k.trim().toLowerCase() === trimmedKey.toLowerCase()
-                    )
-                    if (foundKey) return String(row[foundKey]).trim()
-                }
-                return ""
-            }
-
-            const parsed: ParsedModule[] = jsonData.map((row) => {
-                const courseId = getValue(row, "courseId", "CourseId", "course")
-                const title = getValue(row, "title", "Title")
-                const slug = getValue(row, "slug", "Slug")
-                const description = getValue(row, "description", "Description")
-                const sequence = getValue(row, "sequence", "Sequence")
-                const duration = getValue(row, "duration", "Duration")
-
-                const backendPayload = {
-                    courseId,
-                    title,
-                    slug,
-                    description: description || undefined,
-                    sequence: sequence ? parseInt(sequence, 10) : 1,
-                    duration: duration ? parseInt(duration, 10) : undefined,
-                }
-
-                return {
-                    courseId,
-                    title,
-                    slug,
-                    description,
-                    sequence,
-                    duration,
-                    backendPayload,
-                }
-            })
-
-            const validatedData = parsed.map(validateRow)
-            setParsedData(validatedData)
-
-            const validCount = validatedData.filter(v => v.status === "valid").length
-            setValid(validCount)
-            toast.success(`Parsed ${validatedData.length} modules (${validCount} valid)`)
-        } catch (error) {
-            console.error("Parse error:", error)
-            toast.error("Failed to parse Excel file")
-        } finally {
-            setIsParsing(false)
-        }
-    }
 
     const handleBulkUpload = async () => {
-        const validModules = parsedData.filter(v => v.status === "valid")
-
-        if (validModules.length === 0) {
-            toast.error("No valid modules to upload")
-            return
-        }
 
         setIsUploading(true)
-        toast.info(`Uploading ${validModules.length} modules...`)
 
         try {
-            const payloads = validModules.map(v => v.backendPayload!)
-
-            const result = await bulkCreateModules(payloads)
+            const data = parsedData.filter(m => m.valid === "valid").map(m => m.backendPayload!)
+            const result = await bulkCreateModules(data)
 
             if (result.success) {
-                toast.success(`Successfully uploaded ${validModules.length} modules!`)
+                toast.success(`Successfully uploaded ${data.length} modules!`)
                 setParsedData([])
                 setFile(null)
                 setValid(null)
@@ -231,8 +104,8 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
                 <CardContent className="space-y-4">
                     <div
                         className={`relative border-2 border-dashed rounded-lg p-12 transition-colors ${dragActive
-                                ? "border-primary bg-primary/5"
-                                : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                            ? "border-primary bg-primary/5"
+                            : "border-muted-foreground/25 hover:border-muted-foreground/50"
                             }`}
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -267,19 +140,14 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
 
                     <div className="flex gap-3">
                         <Button
-                            onClick={parseExcel}
-                            disabled={!file || isParsing}
+                            onClick={() => {
+                                parseModuleExcel({ file, setParsedData, setValid })
+                            }}
+                            disabled={!file}
                             className="flex-1 py-6"
                             variant="gradient"
                         >
-                            {isParsing ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Parsing...
-                                </>
-                            ) : (
-                                "Parse File"
-                            )}
+                            Parse File
                         </Button>
                         {parsedData.length > 0 && (
                             <Button
@@ -329,6 +197,7 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
                                         <TableHead>Sequence</TableHead>
                                         <TableHead>Duration</TableHead>
                                         <TableHead>Description</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead>Error</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -336,7 +205,7 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
                                     {parsedData.map((module, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                {module.status === "valid" ? (
+                                                {module.valid === "valid" ? (
                                                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                                                 ) : (
                                                     <AlertCircle className="w-5 h-5 text-destructive" />
@@ -353,6 +222,11 @@ const BulkModuleUpload = ({ courses }: BulkModuleUploadProps) => {
                                             <TableCell>{module.duration}</TableCell>
                                             <TableCell className="text-xs max-w-[200px] truncate">
                                                 {module.description}
+                                            </TableCell>
+                                            <TableCell className="text-xs text-destructive max-w-[200px] truncate">
+                                                <Badge variant={module.status === "published" ? "gradient" : module.status === "draft" ? "secondary" : "destructive"} >
+                                                    {module.status}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-destructive max-w-[200px] truncate">
                                                 {module.error}

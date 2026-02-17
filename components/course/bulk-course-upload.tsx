@@ -9,6 +9,7 @@ import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "luc
 import { parseCourseExcel, ParsedCourse } from "@/lib/helper_bulk/course.helper"
 import { bulkCreateCourses } from "@/lib/backend_actions/course"
 import { useRouter } from "next/navigation"
+import { Badge } from "../ui/badge"
 
 
 
@@ -207,6 +208,7 @@ const BulkCourseUpload = () => {
                                         <TableHead>Certificate</TableHead>
                                         <TableHead>Price</TableHead>
                                         <TableHead>Discount</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead>Error</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -235,6 +237,11 @@ const BulkCourseUpload = () => {
                                             <TableCell>{course.hasCertificate}</TableCell>
                                             <TableCell>{course.price}</TableCell>
                                             <TableCell>{course.discountedPrice}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={course.backendPayload?.status === "active" ? "gradient" : course.backendPayload?.status === "inactive" ? "secondary" : "destructive"} >
+                                                    {course.backendPayload?.status}
+                                                </Badge>
+                                            </TableCell>
                                             <TableCell className="text-xs text-destructive max-w-[200px] truncate">
                                                 {course.error}
                                             </TableCell>

@@ -44,8 +44,9 @@ const navigationLinks = [
     ]
   },
   {
-    href: "/#", label: "Plan", icon: IndianRupee,
+    href: "/#", label: "Subscription Management", icon: IndianRupee,
     children: [
+      { href: "/plan/user-subscription", label: "Subscription Management", icon: LayoutDashboard, description: "Manage user subscriptions" },
       { href: "/plan/category", label: "Category Plan", icon: LayoutDashboard, description: "Manage categories" },
       { href: "/plan/app", label: "App Plan", icon: Boxes, description: "Manage whole app plans" },
     ]

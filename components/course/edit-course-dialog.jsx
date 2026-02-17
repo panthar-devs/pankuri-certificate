@@ -68,8 +68,8 @@ export function EditCourseDialog({ course, categories, children }) {
             thumbnailImage: course?.thumbnailImage || "",
             coverImage: course?.coverImage || "",
             hasPricing: course?.isPaid || false,
-            price: course.pricing?.price || 0,
-            discountedPrice: course.pricing?.discountedPrice || 0,
+            price: course.pricing?.price / 100 || 0,
+            discountedPrice: course.pricing?.discountedPrice / 100 || 0,
             categoryId: course?.categoryId,
             level: course?.level,
             duration: course?.duration || 0,
@@ -337,12 +337,15 @@ export function EditCourseDialog({ course, categories, children }) {
                                                         disabled={isPending}
                                                         type="number"
                                                         min="0"
+                                                        readOnly
+                                                        aria-readonly="true"
+                                                        aria-describedby="price-readonly-message"
                                                         onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                         placeholder="0.00"
-                                                        className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                        className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                     />
-                                                    <FieldDescription className="text-[10px]">
-                                                        Original price before discount
+                                                    <FieldDescription id="price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                        ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                     </FieldDescription>
                                                     {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                 </Field>
@@ -361,13 +364,16 @@ export function EditCourseDialog({ course, categories, children }) {
                                                         id={field.name}
                                                         type="number"
                                                         min="0"
+                                                        readOnly
+                                                        aria-readonly="true"
+                                                        aria-describedby="discounted-price-readonly-message"
                                                         value={field.state.value}
                                                         onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                         placeholder="0.00"
-                                                        className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                        className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                     />
-                                                    <FieldDescription className="text-[10px]">
-                                                        Final price users will pay
+                                                    <FieldDescription id="discounted-price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                        ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                     </FieldDescription>
                                                     {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                 </Field>

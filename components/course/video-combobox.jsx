@@ -36,7 +36,7 @@ export function VideoCombobox({ value, onValueChange, disabled }) {
             })
 
             if (result.success) {
-                setVideos(result.data || [])
+                setVideos(result.data.data || [])
             } else {
                 toast.error(result.error || "Failed to fetch videos")
                 setVideos([])

@@ -304,15 +304,18 @@ export function EditCategoryDialog({ category, parentCategories, children }) {
                                                                 <Input
                                                                     id={field.name}
                                                                     value={field.state.value}
+                                                                    readOnly
+                                                                    aria-readonly="true"
+                                                                    aria-describedby="monthly-price-readonly-message"
                                                                     disabled={isPending}
                                                                     type="number"
                                                                     min="0"
                                                                     onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                                     placeholder="0"
-                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                                 />
-                                                                <FieldDescription className="text-[10px]">
-                                                                    Original monthly price
+                                                                <FieldDescription id="monthly-price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                                    ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                                 </FieldDescription>
                                                                 {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                             </Field>
@@ -330,13 +333,16 @@ export function EditCategoryDialog({ category, parentCategories, children }) {
                                                                     id={field.name}
                                                                     type="number"
                                                                     min="0"
+                                                                    readOnly
+                                                                    aria-readonly="true"
+                                                                    aria-describedby="monthly-discounted-price-readonly-message"
                                                                     value={field.state.value}
                                                                     onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                                     placeholder="0"
-                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                                 />
-                                                                <FieldDescription className="text-[10px]">
-                                                                    Final monthly price
+                                                                <FieldDescription id="monthly-discounted-price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                                    ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                                 </FieldDescription>
                                                                 {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                             </Field>
@@ -362,15 +368,18 @@ export function EditCategoryDialog({ category, parentCategories, children }) {
                                                                 <Input
                                                                     id={field.name}
                                                                     value={field.state.value}
+                                                                    readOnly
+                                                                    aria-readonly="true"
+                                                                    aria-describedby="yearly-price-readonly-message"
                                                                     disabled={isPending}
                                                                     type="number"
                                                                     min="0"
                                                                     onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                                     placeholder="0"
-                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                                 />
-                                                                <FieldDescription className="text-[10px]">
-                                                                    Original yearly price
+                                                                <FieldDescription id="yearly-price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                                    ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                                 </FieldDescription>
                                                                 {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                             </Field>
@@ -388,13 +397,16 @@ export function EditCategoryDialog({ category, parentCategories, children }) {
                                                                     id={field.name}
                                                                     type="number"
                                                                     min="0"
+                                                                    readOnly
+                                                                    aria-readonly="true"
+                                                                    aria-describedby="yearly-discounted-price-readonly-message"
                                                                     value={field.state.value}
                                                                     onChange={(e) => field.handleChange(parseInt(e.target.value) || 0)}
                                                                     placeholder="0"
-                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1"
+                                                                    className="h-10 bg-background shadow-sm transition-shadow focus-visible:ring-1 cursor-not-allowed"
                                                                 />
-                                                                <FieldDescription className="text-[10px]">
-                                                                    Final yearly price
+                                                                <FieldDescription id="yearly-discounted-price-readonly-message" className="text-[10px] text-amber-600 font-medium">
+                                                                    ⓘ Pricing can only be changed via the separate "Change Pricing" button
                                                                 </FieldDescription>
                                                                 {field.state.meta.errors.length > 0 && <FieldError errors={field.state.meta.errors} />}
                                                             </Field>

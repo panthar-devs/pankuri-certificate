@@ -101,7 +101,7 @@ export const parseCourseExcel = async ({ file, setParsedData, setValid }: any) =
 
         const parsed: ParsedCourse[] = jsonData.map((row) => {
             const title = getValue(row, "title", "Title")
-            const slug = getValue(row, "slug", "Slug")
+            const slug = getValue(row, "slug", "Slug") || title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()
             const description = getValue(row, "description", "Description")
             const thumbnailImage = getValue(row, "thumbnailImage", "ThumbnailImage", "thumbnail")
             const coverImage = getValue(row, "coverImage", "CoverImage", "cover")
@@ -114,7 +114,7 @@ export const parseCourseExcel = async ({ file, setParsedData, setValid }: any) =
             const price = getValue(row, "price", "Price")
             const discountedPrice = getValue(row, "discountedPrice", "DiscountedPrice", "discount")
             const demoVideoId = getValue(row, "demoVideoId", "DemoVideoId", "demo")
-            const status = getValue(row, "status", "Status") || "active"
+            const status = getValue(row, "status", "Status") || "inactive"
             const tagsRaw = getValue(row, "tags", "Tags") || ""
 
             const parseTags = (str: string): string[] => {

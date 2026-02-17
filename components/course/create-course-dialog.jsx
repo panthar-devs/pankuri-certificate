@@ -125,6 +125,8 @@ export function CreateCourseDialog({ children, categories, trainers = [] }) {
                         ...value,
                         thumbnailImage: thumbnailUrl,
                         coverImage: coverUrl,
+                        price: value.hasPricing && value.price * 100,
+                        discountedPrice: value.hasPricing && value.discountedPrice * 100
                     })
 
                     if (result.success) {
