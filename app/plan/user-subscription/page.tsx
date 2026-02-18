@@ -44,7 +44,7 @@ async function SubscriptionsContent({ searchP }: { searchP: any }) {
             {/* Metrics */}
             {subscriptions.length > 0 && (
                 <>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         {/* 1. Active Subscriptions */}
                         <div className="rounded-xl border bg-card p-5 flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -118,7 +118,7 @@ async function SubscriptionsContent({ searchP }: { searchP: any }) {
                         </div>
 
                         {/* 7. Billing Amount */}
-                        <div className="rounded-xl border bg-card p-5 flex items-start gap-4">
+                        {/* <div className="rounded-xl border bg-card p-5 flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                                 <BadgeIndianRupee className="h-5 w-5 text-green-600" />
                             </div>
@@ -127,10 +127,10 @@ async function SubscriptionsContent({ searchP }: { searchP: any }) {
                                 <p className="text-2xl font-bold text-green-600 mt-0.5">{formatINR(billingAmount)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Normalized from all billing cycles</p>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* 8. Estimated Amount */}
-                        <div className="rounded-xl border bg-card p-5 flex items-start gap-4">
+                        {/* <div className="rounded-xl border bg-card p-5 flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0">
                                 <TrendingUp className="h-5 w-5 text-teal-600" />
                             </div>
@@ -139,7 +139,7 @@ async function SubscriptionsContent({ searchP }: { searchP: any }) {
                                 <p className="text-2xl font-bold text-teal-600 mt-0.5">{formatINR(estimatedAmount)}<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Recurring revenue excl. orders</p>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* <SubscriptionGraph data={subscription_graph_data} /> */}

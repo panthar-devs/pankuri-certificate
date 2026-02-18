@@ -44,11 +44,11 @@ const navigationLinks = [
     ]
   },
   {
-    href: "/#", label: "Subscription Management", icon: IndianRupee,
+    href: "/subscription-management", label: "Subscription Management", icon: IndianRupee,
     children: [
-      { href: "/plan/user-subscription", label: "Subscription Management", icon: LayoutDashboard, description: "Manage user subscriptions" },
       { href: "/plan/category", label: "Category Plan", icon: LayoutDashboard, description: "Manage categories" },
       { href: "/plan/app", label: "App Plan", icon: Boxes, description: "Manage whole app plans" },
+      { href: "/plan/user-subscription", label: "Subscription Management", icon: LayoutDashboard, description: "Manage user subscriptions" },
     ]
   },
 
@@ -56,6 +56,8 @@ const navigationLinks = [
 
 export default function Component() {
   const pathname = usePathname()
+
+  console.log("navbar pathname ==> ", pathname)
   const [open, setOpen] = useState(false)
 
   return (
@@ -144,7 +146,7 @@ export default function Component() {
             <NavigationMenuList className="gap-2">
               {navigationLinks.map((link, index) => {
                 const Icon = link.icon
-                const isActive = (pathname === "/" && link.href === "/") || (pathname.includes(((link.href).split("/")[1])) && link.href !== "/") || link?.children?.some(child => pathname === child.href)
+                const isActive = (pathname === "/" && link.href === "/") || link?.children?.some(child => pathname === child.href) || (pathname === link.href && link.href !== "/")
                 return (
                   link.children ?
                     <NavigationMenuItem key={index} >
@@ -159,7 +161,7 @@ export default function Component() {
                         <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                           {link.children.map((component, i) => {
                             const ChildIcon = component.icon
-                            const isChildActive = (pathname === "/" && component.href === "/") || (pathname.includes(((component.href).split("/")[1])) && link.href !== "/")
+                            const isChildActive = (pathname === "/" && component.href === "/") || (pathname === component.href && link.href !== "/")
                             return (
                               <li key={`menu-${i}`}>
                                 <NavigationMenuLink asChild>

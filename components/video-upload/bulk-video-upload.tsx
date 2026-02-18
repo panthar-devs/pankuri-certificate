@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import * as XLSX from "xlsx"
 import { createBulkVideos } from "@/lib/backend_actions/videos"
+import { Badge } from "../ui/badge"
 
 interface ParsedVideo {
     title: string
@@ -21,7 +22,8 @@ interface ParsedVideo {
     timeStamps: string  // JSON string for display
     description: string
 
-    status?: "pending" | "valid" | "invalid"
+    valid?: "pending" | "valid" | "invalid"
+    status?: string
     error?: string
 
     // Backend-ready payload (not shown in UI)
@@ -118,7 +120,7 @@ const BulkVideoUpload = () => {
 
         return {
             ...row,
-            status: errors.length > 0 ? "invalid" : "valid",
+            valid: errors.length > 0 ? "invalid" : "valid",
             error: errors.join(", ")
         }
     }
@@ -159,7 +161,7 @@ const BulkVideoUpload = () => {
                 const isShort = row.isShort === true || row.IsShort === true || row.isShort === "true" || false
                 const disclaimer = row.disclaimer || row.Disclaimer || ""
                 const description = row.description || row.Description || ""
-
+                const status = row.status || row.Status || "processing"
                 // Parse JSON arrays from Excel cells
                 const productsRaw = row.products || row.Products || "[]"
                 const timeStampsRaw = row.timeStamps || row.TimeStamps || "[]"
@@ -183,7 +185,8 @@ const BulkVideoUpload = () => {
                     thumbnailUrl: thumbnailUrl || null,
                     duration: duration || null,
                     // quality: videoQuality,
-                    status: externalUrl ? "ready" : "processing",
+                    valid: externalUrl ? "valid" : "invalid",
+                    status: externalUrl ? "ready" : status,
                     metadata: {
                         quality: videoQuality,
                         isShort,
@@ -201,6 +204,7 @@ const BulkVideoUpload = () => {
                     videoQuality: videoQuality.toString(),
                     isShort,
                     disclaimer,
+                    status,
                     products: productsRaw,
                     timeStamps: timeStampsRaw,
                     description,
@@ -339,7 +343,7 @@ const BulkVideoUpload = () => {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-12">Status</TableHead>
+                                        <TableHead className="w-12">Valid</TableHead>
                                         <TableHead>Title</TableHead>
                                         <TableHead>Video URL</TableHead>
                                         <TableHead>Thumbnail URL</TableHead>
@@ -350,6 +354,7 @@ const BulkVideoUpload = () => {
                                         <TableHead>Products</TableHead>
                                         <TableHead>TimeStamps</TableHead>
                                         <TableHead>Description</TableHead>
+                                        <TableHead>Status</TableHead>
                                         <TableHead>Error Message</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -357,7 +362,7 @@ const BulkVideoUpload = () => {
                                     {parsedData.map((video, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                {video.status === "valid" ? (
+                                                {video.valid === "valid" ? (
                                                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                                                 ) : (
                                                     <AlertCircle className="w-5 h-5 text-destructive" />
@@ -386,6 +391,11 @@ const BulkVideoUpload = () => {
                                             </TableCell>
                                             <TableCell className="max-w-[200px] truncate text-muted-foreground">
                                                 {video.description}
+                                            </TableCell>
+                                            <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                                                <Badge variant={video.status === "ready" ? "gradient" : "secondary"} >
+                                                    {video.status}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-destructive max-w-[150px] truncate">
                                                 {video.error}
