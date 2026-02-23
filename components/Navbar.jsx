@@ -57,7 +57,7 @@ const navigationLinks = [
 export default function Component() {
   const pathname = usePathname()
 
-  console.log("navbar pathname ==> ", pathname)
+  // console.log("navbar pathname ==> ", pathname)
   const [open, setOpen] = useState(false)
 
   return (
